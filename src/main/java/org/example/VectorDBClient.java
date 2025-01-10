@@ -4,10 +4,15 @@ import com.google.gson.JsonObject;
 import io.milvus.client.MilvusClient;
 import io.milvus.grpc.SearchResults;
 import io.milvus.param.collection.CreateCollectionParam;
+import io.milvus.param.collection.LoadCollectionParam;
 import io.milvus.param.dml.SearchParam;
 import io.milvus.v2.client.ConnectConfig;
 import io.milvus.v2.client.MilvusClientV2;
+import io.milvus.v2.common.DataType;
+import io.milvus.v2.common.IndexParam;
+import io.milvus.v2.service.collection.request.AddFieldReq;
 import io.milvus.v2.service.collection.request.CreateCollectionReq;
+import io.milvus.v2.service.collection.request.LoadCollectionReq;
 import io.milvus.v2.service.vector.request.InsertReq;
 import io.milvus.v2.service.vector.request.SearchReq;
 import io.milvus.v2.service.vector.request.data.BaseVector;
@@ -30,12 +35,30 @@ public class VectorDBClient {
         System.out.println("Connected to Milvus!");
     }
 
-    public void createCollection(String collectionName, int embeddingDimension) {
+    public void createCollection(String collectionName) {
+        CreateCollectionReq.CollectionSchema collectionSchema = client.createSchema();
+        collectionSchema.addField(AddFieldReq.builder().fieldName("id").dataType(DataType.Int64).isPrimaryKey(Boolean.TRUE).autoID(Boolean.FALSE).description("id").build());
+        collectionSchema.addField(AddFieldReq.builder().fieldName("vector").dataType(DataType.FloatVector).dimension(512).build());
+        collectionSchema.addField(AddFieldReq.builder().fieldName("metadata").dataType(DataType.VarChar).build());
+
+        IndexParam indexParam = IndexParam.builder()
+                .fieldName("vector")
+                .metricType(IndexParam.MetricType.COSINE)
+                .build();
+
         CreateCollectionReq createCollectionReq = CreateCollectionReq.builder()
                 .collectionName(collectionName)
-                .dimension(embeddingDimension)
+                .collectionSchema(collectionSchema)
+                .indexParams(Collections.singletonList(indexParam))
                 .build();
         client.createCollection(createCollectionReq);
+    }
+
+    public void loadCollection(String collectionName) {
+        LoadCollectionReq loadCollectionReq = LoadCollectionReq.builder()
+                .collectionName(collectionName)
+                .build();
+        client.loadCollection(loadCollectionReq);
     }
 
     public void insert(String collectionName, List<JsonObject> vectors) {
@@ -51,7 +74,8 @@ public class VectorDBClient {
         SearchReq searchReq = SearchReq.builder()
                 .collectionName(collectionName)
                 .data(Collections.singletonList(queryVector))
-                .topK(1)
+                .outputFields(Collections.singletonList("metadata"))
+                .topK(10)
                 .build();
 
         return client.search(searchReq).getSearchResults();

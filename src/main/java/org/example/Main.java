@@ -8,7 +8,7 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) {
         // Example sentences to embed
-        String[] answers = {"My name is Sagiv", "I love to eat pizza"};
+        String[] answers = {"My name is Sagiv", "I love to eat pizza", "Israel is the best country in the world", "Only in Haifa there is Maccabi", "My car is blue", "My mother name is Eti"};
 
         EmbeddingConverter embeddingConverter = new EmbeddingConverter();
         List<List<Float>> answersEmbeddings = embeddingConverter.convert(answers);
@@ -23,11 +23,13 @@ public class Main {
         }
 
         VectorDBClient vectorDBClient = new VectorDBClient();
-        String collectionName = "sentence_embeddings";
-        vectorDBClient.createCollection(collectionName, 512);
+        String collectionName = "cozPilot";
+        vectorDBClient.createCollection(collectionName);
         vectorDBClient.insert(collectionName, answersVectors);
 
-        String question = "What is my name?";
+        vectorDBClient.loadCollection(collectionName);
+
+        String question = "What is my mom name?";
         FloatVec questionEmbedding = new FloatVec(embeddingConverter.convert(question).get(0));
         List<List<SearchResp.SearchResult>> searchResults = vectorDBClient.search(collectionName, questionEmbedding);
 
