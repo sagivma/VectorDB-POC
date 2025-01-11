@@ -12,6 +12,7 @@ import io.milvus.v2.common.DataType;
 import io.milvus.v2.common.IndexParam;
 import io.milvus.v2.service.collection.request.AddFieldReq;
 import io.milvus.v2.service.collection.request.CreateCollectionReq;
+import io.milvus.v2.service.collection.request.HasCollectionReq;
 import io.milvus.v2.service.collection.request.LoadCollectionReq;
 import io.milvus.v2.service.vector.request.InsertReq;
 import io.milvus.v2.service.vector.request.SearchReq;
@@ -33,6 +34,13 @@ public class VectorDBClient {
                 .build();
         this.client = new MilvusClientV2(connectConfig);
         System.out.println("Connected to Milvus!");
+    }
+
+    public boolean hasCollection(String collectionName) {
+        HasCollectionReq hasCollectionReq = HasCollectionReq.builder()
+                .collectionName(collectionName)
+                .build();
+        return client.hasCollection(hasCollectionReq);
     }
 
     public void createCollection(String collectionName) {
@@ -75,7 +83,7 @@ public class VectorDBClient {
                 .collectionName(collectionName)
                 .data(Collections.singletonList(queryVector))
                 .outputFields(Collections.singletonList("metadata"))
-                .topK(10)
+                .topK(3)
                 .build();
 
         return client.search(searchReq).getSearchResults();

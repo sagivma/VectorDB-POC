@@ -12,10 +12,19 @@ import java.util.Arrays;
 import java.util.List;
 
 public class EmbeddingConverter {
-    private SavedModelBundle model;
+    public static EmbeddingConverter INSTANCE;
 
-    public EmbeddingConverter() {
+    private final SavedModelBundle model;
+
+    private EmbeddingConverter() {
         this.model = SavedModelBundle.load("src\\main\\resources");
+    }
+
+    public static EmbeddingConverter getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new EmbeddingConverter();
+        }
+        return INSTANCE;
     }
 
     public List<List<Float>> convert(String... sentences) {
